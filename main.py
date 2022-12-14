@@ -3,14 +3,13 @@ from selenium.webdriver.chrome.options import Options
 import os
 import time
 from selenium.webdriver.common.by import By
-# Press the green button in the gutter to run the script.
 import csv
 import gspread
 from datetime import datetime, timedelta
 
-PATH_DRIVER = '/Users/dangchu/Documents/driver/chromedriver_107'
-KEY_PATH = '/Users/dangchu/Documents/cert/ggsheet_personal.json'
-LINK_SHEET_PARSER = 'https://docs.google.com/spreadsheets/d/1UKtxXz9e8dJftp-dWi62vNN0vAfoQOCg0zP1TbP4TgA'
+PATH_DRIVER = os.getenv('PATH_DRIVER', '/Users/dangchu/Documents/driver/chromedriver_107')
+KEY_PATH = os.getenv('KEY_PATH', '/Users/dangchu/Documents/cert/ggsheet_personal.json')
+LINK_SHEET_PARSER = os.getenv('LINK_SHEET_PARSER', 'https://docs.google.com/spreadsheets/d/1UKtxXz9e8dJftp-dWi62vNN0vAfoQOCg0zP1TbP4TgA')
 
 def get_element(driver, type, path, await_loading=True):
     loop_check = True
