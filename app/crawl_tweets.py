@@ -8,16 +8,16 @@ from selenium.webdriver.common.by import By
 import pytz
 
 if __name__ == '__main__':
-  # parser = argparse.ArgumentParser(
-  #   description="Parameters for crawl tweet of channel."
-  # )
-  # parser.add_argument("--project", help="Name of project")
-  # args = parser.parse_args()
-  #
-  # project = (
-  #   args.project
-  # )
-  project = 'SuiGlobal'
+  parser = argparse.ArgumentParser(
+    description="Parameters for crawl tweet of channel."
+  )
+  parser.add_argument("--project", help="Name of project")
+  args = parser.parse_args()
+
+  project = (
+    args.project
+  )
+  # project = 'SuiGlobal'
   tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
   with TwitterSeleniumDriver() as driver:
