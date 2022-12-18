@@ -13,7 +13,7 @@ class TwitterSeleniumDriver(WebDriver):
       logging.warning("Chrome option is None, init option...")
       chrome_options = Options()
       user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
-      # chrome_options.add_argument('--headless')
+      chrome_options.add_argument('--headless')
       chrome_options.add_argument('--user-agent=%s' % user_agent)
       chrome_options.add_argument(f"user-data-dir={global_env.CACHE_DRIVER_LOCATION}")
     # driver = webdriver.Chrome(
