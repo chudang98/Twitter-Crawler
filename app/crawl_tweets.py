@@ -6,6 +6,10 @@ import gspread
 from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 import pytz
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
