@@ -1,5 +1,3 @@
-from utilities.selenium_driver import TwitterSeleniumDriver
-import utilities.env_managment as global_env
 import logging
 import argparse
 import gspread
@@ -10,6 +8,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
+
+from utilities.selenium_driver import TwitterSeleniumDriver
+import utilities.env_managment as global_env
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(

@@ -3,11 +3,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import os
 import sys
-import utilities.env_managment as global_env
 import time
 import logging
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
+
+import utilities.env_managment as global_env
 
 class TwitterSeleniumDriver(WebDriver):
   # This class extend from Selenium.WebDriver for flexible using
