@@ -28,8 +28,8 @@ if __name__ == '__main__':
   with TwitterSeleniumDriver() as driver:
     logging.warning("Inited driver !")
     # TODO : Login TWITTER
-    driver.login_twitter()
-
+    # driver.login_twitter()
+    driver.get('https://alonhadat.com.vn/')
     # TODO : Read config of project
     gc = gspread.service_account(filename=global_env.KEY_PATH)
     checkpoint_sheet = gc.open_by_url(global_env.SHEET_DATA).worksheet(global_env.CHECKPOINT_SHEET)

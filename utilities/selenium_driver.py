@@ -63,8 +63,9 @@ class TwitterSeleniumDriver(WebDriver):
         self.find_element(By.XPATH, "//a[@aria-label='Profile'] | //div[@role='button']//span[contains(text(), 'Log in')]")
         loading = False
       except Exception as e:
-        print("Still loading...")
+        print("Still loging...")
         print("Sleep 2 seconds...")
+        # print(self.get_attribute('innerHTML'))
         time.sleep(2)
 
     current_url = self.current_url
