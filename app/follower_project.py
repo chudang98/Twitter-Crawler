@@ -15,6 +15,7 @@ import pandas
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
 import utilities.env_managment as global_env
+from utilities.request_twitter import call_api_twitter
 
 tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
@@ -28,7 +29,6 @@ if __name__ == '__main__':
   # project = (
   #   args.project
   # )
-  project = 'CyborgSwap'
   tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
   bearer_token = 'AAAAAAAAAAAAAAAAAAAAAD%2BUkgEAAAAAxuCobQH%2FAcqOzlk6MitTc3vy9no%3DjtTDVRwOEtPhdJEVP1NVIgCtrTIJGAFVDkv7z3UnfV6mvKOlUG'
@@ -36,80 +36,73 @@ if __name__ == '__main__':
 
   gc = gspread.service_account(filename=global_env.KEY_PATH)
   checkpoint_sheet = gc.open_by_url(global_env.SHEET_DATA).worksheet(global_env.CHECKPOINT_SHEET)
-  sheet_data = gc.open_by_url(global_env.SHEET_DATA).worksheet(project)
 
   list_of_dicts = checkpoint_sheet.get_all_records()
-  config_project = next((x for x in list_of_dicts if x.get('Project Name') == project), None)
-  page_url = config_project.get("Twitter Page")
-  name_project = page_url.split("https://twitter.com/")[1]
+  for project in list_of_dicts:
+    page_url = project.get("Twitter Page")
+    name_project = page_url.split("https://twitter.com/")[1]
 
-  #TODO: Init BigQuery client :
+    #TODO: Init BigQuery client :
 
-  path_auth = global_env.SA_AUTH
-  credentials = service_account.Credentials.from_service_account_file(
-    path_auth, scopes=["https://www.googleapis.com/auth/cloud-platform"],
-  )
-  client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-  table_id = 'smiling-mark-368816.twitter_crawler.followers'
-
-
-  #TODO:  Get id of project
-
-  user_api = f'https://api.twitter.com/2/users/by/username/{name_project}'
-  user_api_response = requests.get(user_api, headers=header)
-  user_id = user_api_response.json()['data']['id']
-
-  #TODO: Get all tweet of project
-  api_followers = f'https://api.twitter.com/2/users/{user_id}/followers'
-  query_params = {
-    "max_results": 100,
-    "user.fields": "created_at"
-  }
-  response = requests.get(
-    api_followers,
-    headers=header,
-    params=query_params
-  )
-  schema = [
-    bigquery.SchemaField("follower_id", "STRING", mode="REQUIRED"),
-    bigquery.SchemaField("username", "STRING", mode="REQUIRED"),
-    bigquery.SchemaField("name", "STRING", mode="REQUIRED"),
-    bigquery.SchemaField("created_date", "DATETIME", mode="REQUIRED"),
-    bigquery.SchemaField("project_follow", "STRING", mode="REQUIRED"),
-  ]
-  while True:
-
-    data = response.json()['data']
-    data_process = [
-      {
-        "follower_id": user['id'],
-        "username": user['username'],
-        "name": user['name'],
-        "created_date": datetime.strptime(user['created_at'], time_format) + timedelta(hours=7),
-        "project_follow": project
-      } for user in data
-    ]
-    # TODO: Save data here
-    df = pandas.DataFrame(data_process)
-    client.load_table_from_dataframe(
-      df,
-      table_id
+    path_auth = global_env.SA_AUTH
+    credentials = service_account.Credentials.from_service_account_file(
+      path_auth, scopes=["https://www.googleapis.com/auth/cloud-platform"],
     )
+    client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+    table_id = 'smiling-mark-368816.twitter_crawler.followers'
 
-    # TODO: Check DONE condition
-    meta_token = response.json().get('meta', None)
-    print(meta_token['next_token'])
-    if meta_token.get('next_token', None) is None:
-      print('Done !!!')
-      break
+
+    #TODO:  Get id of project
+
+    user_api = f'https://api.twitter.com/2/users/by/username/{name_project}'
+    user_api_response = requests.get(user_api, headers=header)
+    user_id = user_api_response.json()['data']['id']
+
+    #TODO: Get all tweet of project
+    api_followers = f'https://api.twitter.com/2/users/{user_id}/followers'
+    query_params = {
+      "max_results": 100,
+      "user.fields": "created_at"
+    }
     response = requests.get(
       api_followers,
       headers=header,
-      params={
-        **query_params,
-        "pagination_token": meta_token['next_token']
-      }
+      params=query_params
     )
+    while True:
+      response = call_api_twitter(api_followers, header, query_params)
+      data = response['data']
+      data_process = [
+        {
+          "follower_id": user['id'],
+          "username": user['username'],
+          "name": user['name'],
+          "created_date": datetime.strptime(user['created_at'], time_format) + timedelta(hours=7),
+          "project_follow": project,
+          "project_id": user_id
+        } for user in data
+      ]
+      # TODO: Save data here
+      df = pandas.DataFrame(data_process)
+      client.load_table_from_dataframe(
+        df,
+        table_id
+      )
+
+      # TODO: Check DONE condition
+      meta_token = response.json().get('meta', None)
+      print(meta_token['next_token'])
+      if meta_token.get('next_token', None) is None:
+        print('Done !!!')
+        break
+      response = requests.get(
+        api_followers,
+        headers=header,
+        params={
+          **query_params,
+          "pagination_token": meta_token['next_token']
+        }
+      )
 
 
 
