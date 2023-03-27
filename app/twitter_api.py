@@ -28,7 +28,7 @@ if __name__ == '__main__':
   # project = (
   #   args.project
   # )
-  project = 'Nexon Finance'
+  # project = 'Nexon Finance'
   tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
   bearer_token = 'AAAAAAAAAAAAAAAAAAAAAD%2BUkgEAAAAAxuCobQH%2FAcqOzlk6MitTc3vy9no%3DjtTDVRwOEtPhdJEVP1NVIgCtrTIJGAFVDkv7z3UnfV6mvKOlUG'
@@ -39,17 +39,22 @@ if __name__ == '__main__':
   # sheet_data = gc.open_by_url(global_env.SHEET_DATA).worksheet(project)
 
   list_of_dicts = checkpoint_sheet.get_all_records()
-  config_project = next((x for x in list_of_dicts if x.get('Project Name') == project), None)
+  # config_project = next((x for x in list_of_dicts if x.get('Project Name') == project), None)
   # page_url = config_project.get("Twitter Page")
   # name_project = page_url.split("https://twitter.com/")[1]
 
   #TODO: Init BigQuery client :
-  path_auth = global_env.SA_AUTH
-  credentials = service_account.Credentials.from_service_account_file(
-    path_auth, scopes=["https://www.googleapis.com/auth/cloud-platform"],
-  )
-  client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-  table_id = 'smiling-mark-368816.twitter_crawler.twitter_posts'
+
+  # path_auth = global_env.SA_AUTH
+  # credentials = service_account.Credentials.from_service_account_file(
+  #   path_auth, scopes=["https://www.googleapis.com/auth/cloud-platform"],
+  # )
+  # client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+  # table_id = 'smiling-mark-368816.twitter_crawler.twitter_posts'
+  gc = gspread.service_account(filename=global_env.KEY_PATH)
+  sheet_data = gc.open_by_url(global_env.SHEET_DATA).worksheet('Hadeswap & Cyborg')
+  index_sheet = 2
+
   time_update = datetime.utcnow() + timedelta(hours=7)
 
   for project in list_of_dicts:
@@ -95,7 +100,6 @@ if __name__ == '__main__':
         data = response_timeline.json()['data']
     medias = response_timeline.json().get('includes', {}).get('media', [])
     meta_token = response_timeline.json().get('meta', None)
-    index_sheet = 2
     # result_tmp = [[f"{page_url}/status/{i['id']}", (datetime.strptime(i['created_at'], time_format) + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S"), i['text']] for i in data]
     # sheet_data.update(f'A{index_sheet}:I', result_tmp)
     # index_sheet += len(data)
@@ -273,13 +277,30 @@ if __name__ == '__main__':
             "project_id": tweet['author_id'],
             "update_time": time_update
           })
-      df = pandas.DataFrame(append_data)
-      client.load_table_from_dataframe(
-        df,
-        table_id
-      )
-      # sheet_data.update(f'A{index_sheet}:I', append_data)
+
+      # TODO : Writing data
+      # df = pandas.DataFrame(append_data)
+      # client.load_table_from_dataframe(
+      #   df,
+      #   table_id
+      # )
+      sheet_data.update(f'A{index_sheet}:L',
+        [[
+          tweet['link_tweet'],
+          tweet['type'],
+          tweet['project'],
+          tweet['project_id'],
+          tweet['like'],
+          tweet['reply'],
+          tweet['retweet'],
+          tweet['content'],
+          tweet['content_refer'],
+          tweet['user_refer'],
+          "\n".join(tweet['attachments']),
+          (tweet['post_date'] + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S")
+        ] for tweet in append_data])
       index_sheet += len(append_data)
+      index_sheet += 1
 
       # result_tmp = [[f"{page_url}/status/{i['id']}", (datetime.strptime(i['created_at'], time_format) + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S"), i['text']] for i in data]
       # sheet_data.update(f'A{index_sheet}:I', result_tmp)

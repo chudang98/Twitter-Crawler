@@ -34,17 +34,20 @@ if __name__ == '__main__':
   header = {"Authorization": f"Bearer {bearer_token}"}
 
   gc = gspread.service_account(filename=global_env.KEY_PATH)
+  sheet_data = gc.open_by_url(global_env.SHEET_DATA).worksheet('Thông tin dự án')
   checkpoint_sheet = gc.open_by_url(global_env.SHEET_DATA).worksheet(global_env.CHECKPOINT_SHEET)
 
   list_of_dicts = checkpoint_sheet.get_all_records()
 
   #TODO: Init BigQuery client :
-  path_auth = global_env.SA_AUTH
-  credentials = service_account.Credentials.from_service_account_file(
-    path_auth, scopes=["https://www.googleapis.com/auth/cloud-platform"],
-  )
-  client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-  table_id = 'smiling-mark-368816.twitter_crawler.projects'
+
+  # path_auth = global_env.SA_AUTH
+  # credentials = service_account.Credentials.from_service_account_file(
+  #   path_auth, scopes=["https://www.googleapis.com/auth/cloud-platform"],
+  # )
+  # client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+  # table_id = 'smiling-mark-368816.twitter_crawler.projects'
+
   time_update = datetime.utcnow() + timedelta(hours=7)
   query_param = {
     "user.fields": "created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld"
@@ -87,12 +90,19 @@ if __name__ == '__main__':
       'join_date': datetime.strptime(project_info['created_at'], time_format) + timedelta(hours=7),
       'verified': project_info['verified']
     })
-
-  df = pandas.DataFrame(data_insert)
-  client.load_table_from_dataframe(
-    df,
-    table_id
-  )
-  client.close()
+  sheet_data.update(f'A2:E',
+                    [[
+                      project['name'],
+                      (project['join_date']).strftime("%Y-%m-%d %H:%M:%S"),
+                      project['following'],
+                      project['follower'],
+                      project['tweet']
+                    ] for project in data_insert])
+  # df = pandas.DataFrame(data_insert)
+  # client.load_table_from_dataframe(
+  #   df,
+  #   table_id
+  # )
+  # client.close()
 
 
