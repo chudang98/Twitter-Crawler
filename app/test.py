@@ -1,5 +1,7 @@
 import argparse
+import logging
 import time
+import docker
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
@@ -12,9 +14,16 @@ if __name__ == '__main__':
     args.project_url,
     args.table_id
   )
-  print("Parameter :")
-  print(project_url)
-  print(table_id)
-  print("Start sleep 10 seconds...")
-  time.sleep(10)
-  print("Done !")
+  logging.warning("Parameter :")
+  logging.warning(project_url)
+  logging.warning(table_id)
+  client_docker = docker.from_env()
+  client_docker.containers.run(
+    'test_app',
+    '--project_url test_url --table_id test_table',
+    detach=True
+  )
+  logging.warning("Started container !")
+  logging.warning("Start sleep 5 seconds...")
+  time.sleep(5)
+  # logging.warning("Done !")

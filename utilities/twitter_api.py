@@ -26,17 +26,17 @@ def __call_api(api_url, req_params):
         logging.ERROR("Error limit request Twitter API !!!")
         raise Exception("Limit request Twitter API !!!!!")
     except Exception as e:
-      print(f'Error when call API !!!!')
+      logging.error(f'Error when call API !!!!')
       if response_api.json().get('status', 0) == 429:
-        print('Sleeping 10 minutes...')
+        logging.warning('Sleeping 10 minutes...')
         time.sleep(600)
         continue
       else:
-        print(e)
-        print('Cannot handle this error !!!!!!!')
+        logging.error("Error Tweeter API cannot handle !")
+        logging.error(e)
         break
     else:
-      print('Call request success.')
+      logging.warning('Call request success.')
       return response_api
 
 def get_timeline(user_id, next_token=None):
