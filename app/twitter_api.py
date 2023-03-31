@@ -52,7 +52,7 @@ if __name__ == '__main__':
   # client = bigquery.Client(credentials=credentials, project=credentials.project_id)
   # table_id = 'smiling-mark-368816.twitter_crawler.twitter_posts'
   gc = gspread.service_account(filename=global_env.KEY_PATH)
-  sheet_data = gc.open_by_url(global_env.SHEET_DATA).worksheet('Hadeswap & Cyborg')
+  sheet_data = gc.open_by_url(global_env.SHEET_DATA).worksheet('Zyberswap')
   index_sheet = 2
 
   time_update = datetime.utcnow() + timedelta(hours=7)

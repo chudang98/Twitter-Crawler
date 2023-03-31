@@ -6,10 +6,10 @@ import logging
 import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
-import utilities.env_managment as global_env
+from utilities.env_managment import PROJECT_STATUS
 import utilities.bigquery as bq_utils
-import utilities.ggsheet as ggs_utils
 import utilities.twitter_api as twitter_api
+import utilities.mongodb_utils as mongo_utils
 tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
 def get_timeline_user_toBQ(project_url, table_id):
@@ -49,6 +49,7 @@ def get_timeline_user_toBQ(project_url, table_id):
       response_timeline = twitter_api.get_timeline(user_id, next_token)
     else:
       logging.warning("Done get timeline !")
+      mongo_utils.update_status(project_id, PROJECT_STATUS['done'])
       return
 
 
@@ -58,10 +59,13 @@ if __name__ == '__main__':
   )
   parser.add_argument("--project_url", help="Url of project")
   parser.add_argument("--table_id", help="BigQuery table id")
+  parser.add_argument("--project_id", help="BigQuery table id")
   args = parser.parse_args()
-  project_url, table_id = (
+  project_url, table_id, project_id = (
     args.project_url,
-    args.table_id
+    args.table_id,
+    args.project_id
   )
-
+  mongo_utils.update_status(project_id, PROJECT_STATUS['running'])
   get_timeline_user_toBQ(project_url, table_id)
+  mongo_utils.update_status(project_id, PROJECT_STATUS['done'])
