@@ -66,6 +66,8 @@ if __name__ == '__main__':
     args.table_id,
     args.project_id
   )
+  logging.warning("All parameter:")
+  logging.warning(args)
   if project_id:
     mongo_utils.update_status(project_id, PROJECT_STATUS['running'])
   get_timeline_user_toBQ(project_url, table_id)

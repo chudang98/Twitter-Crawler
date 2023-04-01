@@ -6,6 +6,7 @@ import pytz
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
 import utilities.env_managment as global_env
 import datetime
+from bson.objectid import ObjectId
 
 MONGO_HOST = global_env.MONGO_HOST
 MONGO_DB = global_env.MONGO_DB
@@ -19,7 +20,7 @@ def update_status(project_id, status):
   )
   db = client_mongo[MONGO_DB]
   db[MONGO_COLLECTION].update_one(
-    {"_id": project_id},
+    {"_id": ObjectId(project_id)},
     {"$set": {
       'status': status,
       'last_run': datetime.datetime.now()
