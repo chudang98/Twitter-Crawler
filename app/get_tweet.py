@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import argparse
+import re
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/../')
 from utilities.env_managment import PROJECT_STATUS
@@ -14,7 +15,7 @@ tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
 def get_timeline_user_toBQ(project_url, table_id):
   logging.warning(f"Start get timeline of project url {project_url}")
-  username = project_url.split("https://twitter.com/")[1]
+  username = re.search('(?<=\/\/twitter.com\/)([a-zA-Z0-9]*)', project_url).group()
   profile_response = twitter_api.get_profile_twitter(username)
   user_id = profile_response.json()['data']['id']
   logging.warning(f"User id is {user_id}")
@@ -49,7 +50,6 @@ def get_timeline_user_toBQ(project_url, table_id):
       response_timeline = twitter_api.get_timeline(user_id, next_token)
     else:
       logging.warning("Done get timeline !")
-      mongo_utils.update_status(project_id, PROJECT_STATUS['done'])
       return
 
 
@@ -66,6 +66,8 @@ if __name__ == '__main__':
     args.table_id,
     args.project_id
   )
-  mongo_utils.update_status(project_id, PROJECT_STATUS['running'])
+  if project_id:
+    mongo_utils.update_status(project_id, PROJECT_STATUS['running'])
   get_timeline_user_toBQ(project_url, table_id)
-  mongo_utils.update_status(project_id, PROJECT_STATUS['done'])
+  if project_id:
+    mongo_utils.update_status(project_id, PROJECT_STATUS['done'])
