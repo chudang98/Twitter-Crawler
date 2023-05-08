@@ -28,8 +28,8 @@ def __call_api(api_url, req_params):
     except Exception as e:
       logging.error(f'Error when call API !!!!')
       if response_api.json().get('status', 0) == 429:
-        logging.warning('Sleeping 10 minutes...')
-        time.sleep(600)
+        logging.warning('Sleeping 5 minutes...')
+        time.sleep(300)
         continue
       else:
         logging.error("Error Tweeter API cannot handle !")
@@ -81,14 +81,21 @@ def schema_tweet(page_url, tweet, project_name, medias_ref):
   if refer_info:
     refer_tweet = refer_info[0]
     if (refer_tweet.get('type', None) == 'retweeted' or
-        refer_tweet.get('type', None) == 'quoted'):
+        refer_tweet.get('type', None) == 'quoted' or
+        refer_tweet.get('type', None) == 'replied_to'):
       tweet_id = refer_tweet['id']
       response_reftweet = get_detail_tweet(tweet_id)
       ref_tweet_data = response_reftweet.json()
+      if refer_tweet.get('type', None) == 'retweeted':
+        tweet_type = 'Retweet'
+      elif refer_tweet.get('type', None) == 'quoted':
+        tweet_type = 'Quote'
+      else:
+        tweet_type = "Reply"
       return {
         "link_tweet": f"{page_url}/status/{tweet['id']}",
         "post_date": datetime.strptime(tweet['created_at'], time_format) + timedelta(hours=7),
-        "type": 'Retweet' if refer_tweet.get('type', None) == 'retweeted' else 'Quote',
+        "type": tweet_type,
         "content": ref_tweet_data['data']['text'] if refer_tweet.get('type', None) == 'retweeted' else tweet['text'],
         "content_refer": '' if refer_tweet.get('type', None) == 'retweeted' else ref_tweet_data['data']['text'],
         "user_refer": ref_tweet_data['includes']['users'][0]['username'],
@@ -101,6 +108,9 @@ def schema_tweet(page_url, tweet, project_name, medias_ref):
         "project_id": tweet['author_id'],
         "update_time": datetime.utcnow() + timedelta(hours=7)
       }
+    else:
+      logging.warning("Cannot detect this tweet !")
+      logging.warning(refer_info)
   else:
     return {
       "link_tweet": f"{page_url}/status/{tweet['id']}",
@@ -118,3 +128,18 @@ def schema_tweet(page_url, tweet, project_name, medias_ref):
       "project_id": tweet['author_id'],
       "update_time": datetime.utcnow() + timedelta(hours=7)
     }
+
+def get_followers(user_id):
+  api_timeline = f'https://api.twitter.com/2/users/{user_id}/followers'
+  query_params = {
+    "max_results": 50,
+    # "max_results": 100,
+    "expansions": "attachments.media_keys",
+    # "expansions": "attachments.media_keys,author_id,referenced_tweets.id,referenced_tweets.id.author_id",
+    # "tweet.fields": "attachments,author_id,created_at,edit_history_tweet_ids,id,public_metrics,text,in_reply_to_user_id",
+    "tweet.fields": "attachments,author_id,created_at,entities,id,in_reply_to_user_id,lang,public_metrics,referenced_tweets,text",
+    "media.fields": "media_key,preview_image_url,url",
+    # "poll.fields": "duration_minutes,end_datetime,id,options,voting_status",
+    "user.fields": "id,name,username,url"
+  }
+  pass
