@@ -16,7 +16,7 @@ tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
 # Range timeline update - MONTH unit
 RANGE_UPDATE_TIMELINE = 1
-mode_run = "debug"
+mode_run = "run"
 
 def get_timeline_user_toBQ(project_url, table_id, email):
   logging.warning(f"Start get timeline of project url {project_url}")
