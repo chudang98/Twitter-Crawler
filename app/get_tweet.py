@@ -23,7 +23,7 @@ def get_timeline_user_toBQ(project_url, table_id, email):
   username = re.search('(?<=\/\/twitter.com\/)([a-zA-Z0-9]*)', project_url).group()
   profile_response = twitter_api.get_profile_twitter(username)
   # This is project id
-  user_id = profile_response.json()['data']['id']
+  user_id = str(profile_response.json()['data']['id'])
   logging.warning(f"User id is {user_id}")
   logging.warning("Creating client BigQuery...")
   client_BQ = bq_utils.create_client()
