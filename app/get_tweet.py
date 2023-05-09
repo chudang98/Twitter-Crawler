@@ -35,8 +35,9 @@ def get_timeline_user_toBQ(project_url, table_id, email):
   if mode_run != "debug":
     bq_utils.add_read_project_id_permission([user_id], email)
     checkpoint = mongo_utils.get_checkpoint_project(user_id)
-    lower_bound_time = checkpoint - datetime.timedelta(days=30)
-    new_checkpoint = lower_bound_time
+    if checkpoint:
+      lower_bound_time = checkpoint - datetime.timedelta(days=30)
+      new_checkpoint = lower_bound_time
 
   if checkpoint or mode_run != "debug":
     mongo_utils.update_checkpoint_project(user_id)
