@@ -41,7 +41,7 @@ def update_status(project_id, status):
     {"_id": ObjectId(project_id)},
     {"$set": {
       'status': status,
-      'updated_at': datetime.datetime.now()
+      'updated_time': datetime.datetime.now()
     }},
     upsert=False)
   logging.warning("Updated status project.")
