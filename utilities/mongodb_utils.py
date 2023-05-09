@@ -55,7 +55,10 @@ def get_checkpoint_project(project_id):
     MONGO_HOST
   )
   db = client_mongo[MONGO_DB]
+  logging.warning("Getting checkpoint from MongoDB...")
   checkpoint = db[CHECKPOINT_COLLECTION].find_one({'_id': project_id})
+  logging.warning("Record checkpoint :")
+  logging.warning(checkpoint)
   return checkpoint['checkpoint'] if checkpoint else None
 
 def update_checkpoint_project(project_id, checkpoint_time=datetime.datetime.now(utc_tz)):
