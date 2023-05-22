@@ -50,14 +50,18 @@ def get_timeline_user_toBQ(project_url, table_id, email):
     medias_ref = response_timeline.json().get('includes', {}).get('media', [])
     append_data = []
     for tweet in data:
-      new_data = twitter_api.schema_tweet(f'https://twitter.com/{username}', tweet, username, medias_ref)
-      append_data.append(new_data)
-      if lower_bound_time and new_data['post_date'] < lower_bound_time:
+      try:
+        new_data = twitter_api.schema_tweet(f'https://twitter.com/{username}', tweet, username, medias_ref)
+        append_data.append(new_data)
+        if lower_bound_time and new_data['post_date'] < lower_bound_time:
           pass_checkpoint = True
-      if new_checkpoint and new_checkpoint < new_data['post_date']:
+        if new_checkpoint and new_checkpoint < new_data['post_date']:
           new_checkpoint = new_data['post_date']
-      else:
-        new_checkpoint = new_data['post_date']
+        else:
+          new_checkpoint = new_data['post_date']
+      except Exception as e:
+        logging.warning(f"Have error when convert schema data for tweet id {tweet['id']}!")
+        logging.warning(e)
     logging.warning("Start create dataframe from pandas...")
 
     #TODO: Get timeline return None object
@@ -71,7 +75,11 @@ def get_timeline_user_toBQ(project_url, table_id, email):
     next_token = response_timeline.json().get('meta', {}).get('next_token', None)
     if next_token and not pass_checkpoint:
       logging.warning("Have next token, continue call API...")
-      response_timeline = twitter_api.get_timeline(user_id, next_token)
+      try:
+        response_timeline = twitter_api.get_timeline(user_id, next_token)
+      except Exception as e:
+        logging.error("Have error when call request timeline !!!!")
+        logging.error(e)
     else:
       mongo_utils.update_checkpoint_project(user_id, new_checkpoint)
       logging.warning("Done get timeline !")
@@ -87,6 +95,13 @@ if __name__ == '__main__':
   parser.add_argument("--project_id", help="Project id", default=None)
   parser.add_argument("--email", help="Email user", default=None)
   args = parser.parse_args()
+
+  # ! Turn off debug mode
+  # project_url = "https://twitter.com/playBushi"
+  # table_id = "canvas-figure-378911.twitter_crawl.tweet"
+  # project_id = "646a46fe3fe233708a2f2df9"
+  # email = "admin@wispswap.io"
+
   project_url, table_id, project_id, email = (
     args.project_url,
     args.table_id,
