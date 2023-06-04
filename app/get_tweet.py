@@ -22,6 +22,9 @@ def get_timeline_user_toBQ(project_url, table_id, email):
   logging.warning(f"Start get timeline of project url {project_url}")
   username = re.search('(?<=\/\/twitter.com\/)([a-zA-Z0-9]*)', project_url).group()
   profile_response = twitter_api.get_profile_twitter(username)
+  if 'data' not in profile_response.json():
+    logging.error("Project is not exist !")
+    return
   # This is project id
   user_id = str(profile_response.json()['data']['id'])
   logging.warning(f"User id is {user_id}")
@@ -85,7 +88,7 @@ def get_timeline_user_toBQ(project_url, table_id, email):
         logging.error(e)
     else:
       logging.warning(f"Update new checkpoint for project {user_id}...")
-      mongo_utils.update_checkpoint_project(user_id, new_checkpoint)
+      mongo_utils.update_checkpoint_project(user_id, username, new_checkpoint)
       logging.warning("Done get timeline !")
       client_BQ.close()
       return

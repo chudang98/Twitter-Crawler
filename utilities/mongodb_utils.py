@@ -61,12 +61,21 @@ def get_checkpoint_project(project_id):
   logging.warning(checkpoint)
   return checkpoint['checkpoint'] if checkpoint else None
 
-def update_checkpoint_project(project_id, checkpoint_time=datetime.datetime.now(utc_tz)):
+def update_checkpoint_project(project_id, name_project, checkpoint_time=datetime.datetime.now(utc_tz)):
   logging.warning(f"Start update checkpoint of project {project_id}")
   logging.warning("Creating MongoDB Client...")
   client_mongo = pymongo.MongoClient(
     MONGO_HOST
   )
   db = client_mongo[MONGO_DB]
-  db[CHECKPOINT_COLLECTION].update_one({"_id": project_id}, {"$set": {"_id": project_id, 'checkpoint': checkpoint_time, 'updated_at': datetime.datetime.now(utc_tz), 'status': 'done'}}, upsert=True)
-  pass
+  db[CHECKPOINT_COLLECTION].update_one({"_id": project_id},
+  {
+    "$set": {
+      "_id": project_id,
+      "project": name_project,
+      'checkpoint': checkpoint_time,
+      'updated_at': datetime.datetime.now(utc_tz),
+      'status': 'done'
+    }
+  },
+  upsert=True)
