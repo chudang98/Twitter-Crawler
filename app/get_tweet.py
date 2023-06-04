@@ -14,8 +14,8 @@ import utilities.twitter_api as twitter_api
 import utilities.mongodb_utils as mongo_utils
 tz = pytz.timezone('Asia/Ho_Chi_Minh')
 
-# Range timeline update - MONTH unit
-RANGE_UPDATE_TIMELINE = 1
+# Range timeline update - DAY unit
+RANGE_UPDATE_TIMELINE = 0
 mode_run = "run"
 
 def get_timeline_user_toBQ(project_url, table_id, email):
@@ -33,19 +33,19 @@ def get_timeline_user_toBQ(project_url, table_id, email):
   new_checkpoint = None
   # TODO: Get checkpoint of project
   if mode_run != "debug":
-    bq_utils.add_read_project_id_permission([user_id], email)
+    if email != 'None':
+      bq_utils.add_read_project_id_permission([user_id], email)
     checkpoint = mongo_utils.get_checkpoint_project(user_id)
     if checkpoint:
-      lower_bound_time = checkpoint - datetime.timedelta(days=30)
+      logging.warning("Have checkpoint !")
+      logging.warning(checkpoint)
+      lower_bound_time = checkpoint - datetime.timedelta(days=RANGE_UPDATE_TIMELINE)
       new_checkpoint = lower_bound_time
-
-  if checkpoint or mode_run != "debug":
-    mongo_utils.update_checkpoint_project(user_id)
 
   # TODO: Get timeline of user
   response_timeline = twitter_api.get_timeline(user_id)
   pass_checkpoint = False
-  while True:
+  while True and not pass_checkpoint:
     data = response_timeline.json()['data']
     medias_ref = response_timeline.json().get('includes', {}).get('media', [])
     append_data = []
@@ -53,12 +53,15 @@ def get_timeline_user_toBQ(project_url, table_id, email):
       try:
         new_data = twitter_api.schema_tweet(f'https://twitter.com/{username}', tweet, username, medias_ref)
         append_data.append(new_data)
+
+        # TODO : Check checkpoint
         if lower_bound_time and new_data['post_date'] < lower_bound_time:
           pass_checkpoint = True
         if new_checkpoint and new_checkpoint < new_data['post_date']:
           new_checkpoint = new_data['post_date']
         else:
           new_checkpoint = new_data['post_date']
+
       except Exception as e:
         logging.warning(f"Have error when convert schema data for tweet id {tweet['id']}!")
         logging.warning(e)
@@ -81,10 +84,11 @@ def get_timeline_user_toBQ(project_url, table_id, email):
         logging.error("Have error when call request timeline !!!!")
         logging.error(e)
     else:
+      logging.warning(f"Update new checkpoint for project {user_id}...")
       mongo_utils.update_checkpoint_project(user_id, new_checkpoint)
       logging.warning("Done get timeline !")
+      client_BQ.close()
       return
-
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
@@ -119,4 +123,5 @@ if __name__ == '__main__':
     logging.error("Have error !!!!")
     logging.error(e)
   if project_id and mode_run != "debug":
+    logging.warning(f"Update status DONE for project id {project_id}")
     mongo_utils.update_status(project_id, PROJECT_STATUS['done'])
