@@ -31,7 +31,7 @@ def get_timeline_user_toBQ(project_url, table_id, email):
   logging.warning("Creating client BigQuery...")
   client_BQ = bq_utils.create_client()
 
-  checkpoint = None
+  checkpoint = None # Post time of last record
   lower_bound_time = None
   new_checkpoint = None
   # TODO: Get checkpoint of project
@@ -43,7 +43,7 @@ def get_timeline_user_toBQ(project_url, table_id, email):
       logging.warning("Have checkpoint !")
       logging.warning(checkpoint)
       lower_bound_time = checkpoint - datetime.timedelta(days=RANGE_UPDATE_TIMELINE)
-      new_checkpoint = lower_bound_time
+      new_checkpoint = checkpoint
 
   # TODO: Get timeline of user
   response_timeline = twitter_api.get_timeline(user_id)
@@ -55,16 +55,16 @@ def get_timeline_user_toBQ(project_url, table_id, email):
     for tweet in data:
       try:
         new_data = twitter_api.schema_tweet(f'https://twitter.com/{username}', tweet, username, medias_ref)
-        append_data.append(new_data)
-
         # TODO : Check checkpoint
         if lower_bound_time and new_data['post_date'] < lower_bound_time:
+          logging.warning("Pass checkpoint !")
           pass_checkpoint = True
-        if new_checkpoint and new_checkpoint < new_data['post_date']:
+          break
+        if new_checkpoint is None:
           new_checkpoint = new_data['post_date']
-        else:
+        elif new_checkpoint < new_data['post_date']:
           new_checkpoint = new_data['post_date']
-
+        append_data.append(new_data)
       except Exception as e:
         logging.warning(f"Have error when convert schema data for tweet id {tweet['id']}!")
         logging.warning(e)
